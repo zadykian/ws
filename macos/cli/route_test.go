@@ -25,7 +25,7 @@ func TestTunnelLoadedFollowsLaunchd(t *testing.T) {
 }
 
 func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Root["/etc/ws/tunnel/ws/routes.d"] = effect.Attrs{Mode: 0o755}
 	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
@@ -42,7 +42,7 @@ func TestTunnelRoutesCheckShowsTheFileAndWritesNothing(t *testing.T) {
 }
 
 func TestRouteCommandsPrintTheErrorAndExit1(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e"})
 	m := p.Machine.(*effecttest.Machine)
 	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	withServerDirs(m)

@@ -15,11 +15,10 @@ func env(k string) string {
 	return map[string]string{"USER": "v", "HOME": "/Users/v"}[k]
 }
 
-// mac is a machine with an empty values.yml and a file for each server, its text by name. ssh takes
-// each server's block, and mise has no gh yet.
+// mac is a machine with a file for each server, its text by name. ssh takes each server's block, and
+// mise has no gh yet.
 func mac(servers map[string]string) *effecttest.Machine {
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = nil
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	m.Dirs["/etc/ws/servers"] = 0o755
@@ -68,21 +67,6 @@ func TestReadRefusesABadValue(t *testing.T) {
 	}
 }
 
-// TestReadRefusesABadMacFileOnce checks that values.yml is read before any server. Two servers
-// and a bad values.yml give one refusal, in that file's words.
-func TestReadRefusesABadMacFileOnce(t *testing.T) {
-	m := mac(map[string]string{"ws": values.Text("WS_SLOT", "0"), "lab": values.Text("WS_SLOT", "1")})
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
-	_, err := Read(t.Context(), m, env, "/p")
-	if err == nil || strings.Count(err.Error(), "/etc/ws/values.yml") != 1 || strings.Contains(err.Error(), "server ") ||
-		strings.Contains(err.Error(), "fix its file") {
-		t.Errorf("read = %v, want one refusal of values.yml, naming no server", err)
-	}
-	if _, err := Servers(m, "/etc/ws/values.yml"); err == nil || strings.Contains(err.Error(), "fix its file") {
-		t.Errorf("servers = %v, want values.yml's refusal alone", err)
-	}
-}
-
 func TestReadWithoutServers(t *testing.T) {
 	m := mac(nil)
 	delete(m.Dirs, "/etc/ws/servers")
@@ -94,14 +78,6 @@ func TestReadWithoutServers(t *testing.T) {
 		if strings.HasPrefix(c, "run ssh -T -G") {
 			t.Errorf("read ran %q, want no check of no host", c)
 		}
-	}
-}
-
-func TestReadNeedsValuesYml(t *testing.T) {
-	m := mac(nil)
-	delete(m.Files, "/etc/ws/values.yml")
-	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "values.yml is missing") {
-		t.Errorf("read = %v, want values.yml asked for", err)
 	}
 }
 
@@ -162,16 +138,6 @@ func TestGitFactsSignWithSewardsKey(t *testing.T) {
 	}
 	if !strings.Contains(f.Git.Keygen, "SSH_AUTH_SOCK='/Users/v/.ssh/seward.sock'") {
 		t.Errorf("keygen = %q, want seward's socket", f.Git.Keygen)
-	}
-}
-
-// TestGitFactsReadNoKey pins that git's text names seward's signing key whatever values.yml names:
-// the key is made by a unit, after the facts are read.
-func TestGitFactsReadNoKey(t *testing.T) {
-	m := mac(nil)
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text())
-	if f, err := Read(t.Context(), m, env, "/p"); err != nil || !strings.Contains(f.Git.Config, "/Users/v/.ssh/ws-sign.pub") {
-		t.Errorf("read = %q, %v; want seward's key with no key named", f.Git.Config, err)
 	}
 }
 

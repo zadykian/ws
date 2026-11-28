@@ -191,30 +191,14 @@ func TestRemoveTakesAServerWhoseOwnFileIsRefused(t *testing.T) {
 	}
 }
 
-func TestRemoveRefusesABadMacFileOnce(t *testing.T) {
-	p, m := removeFixture()
-	m.Files["/etc/ws/servers/abc/values.yml"] = []byte(values.Text("WS_SLOT", "2"))
-	m.Dirs["/etc/ws/servers/abc"] = 0o755
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
-	status, _, stderr := runWs(p, "macos", "remove", "lab")
-	if status != 1 || strings.Count(stderr, "/etc/ws/values.yml") != 1 || strings.Contains(stderr, "fix its file") {
-		t.Errorf("status = %d, stderr = %q; want 1 and one refusal of values.yml alone", status, stderr)
-	}
-	if strings.Contains(stderr, "server ") {
-		t.Errorf("stderr = %q, want no server blamed", stderr)
-	}
-}
-
-// TestRemoveRefusesABadMacFileBeforeABadName checks that values.yml is refused first and alone,
-// as the values page says, where servers/ holds a bad name too.
-func TestRemoveRefusesABadMacFileBeforeABadName(t *testing.T) {
+// TestRemoveRefusesABadNameInServers checks that a bad name in servers/ is refused alone.
+func TestRemoveRefusesABadNameInServers(t *testing.T) {
 	p, m := removeFixture()
 	m.Files["/etc/ws/servers/Abc/values.yml"] = []byte(values.Text("WS_SLOT", "2"))
 	m.Dirs["/etc/ws/servers/Abc"] = 0o755
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
 	status, _, stderr := runWs(p, "macos", "remove", "lab")
-	if status != 1 || strings.Count(stderr, "/etc/ws/values.yml") != 1 || strings.Contains(stderr, "not a server's name") {
-		t.Errorf("status = %d, stderr = %q; want 1 and one refusal of values.yml alone", status, stderr)
+	if status != 1 || strings.Count(stderr, "not a server's name") != 1 || strings.Contains(stderr, "server ws") {
+		t.Errorf("status = %d, stderr = %q; want 1 and one refusal of the name alone", status, stderr)
 	}
 }
 

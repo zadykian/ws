@@ -35,16 +35,16 @@ func IsName(s string) bool {
 	return true
 }
 
-// serversDir returns the directory of the servers beside values.yml at mac.
-func serversDir(mac string) string {
-	return path.Join(path.Dir(mac), "servers")
+// serversDir returns the directory of the servers below dir.
+func serversDir(dir string) string {
+	return path.Join(dir, "servers")
 }
 
-// Servers returns the names of the servers beside values.yml at mac: the directories of servers/ that
-// hold a values.yml, in order. A directory with a file and a bad name is refused.
-func Servers(m effect.Machine, mac string) ([]string, error) {
-	dir := serversDir(mac)
-	entries, err := m.ReadDir(dir)
+// Servers returns the names of the servers below dir: the directories of servers/ that hold a
+// values.yml, in order. A directory with a file and a bad name is refused.
+func Servers(m effect.Machine, dir string) ([]string, error) {
+	servers := serversDir(dir)
+	entries, err := m.ReadDir(servers)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
@@ -56,7 +56,7 @@ func Servers(m effect.Machine, mac string) ([]string, error) {
 		if strings.HasPrefix(e, ".") {
 			continue
 		}
-		_, err := m.Stat(ServerPath(mac, e))
+		_, err := m.Stat(ServerPath(dir, e))
 		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, syscall.ENOTDIR) {
 			continue
 		}
@@ -64,7 +64,7 @@ func Servers(m effect.Machine, mac string) ([]string, error) {
 			return nil, err
 		}
 		if !IsName(e) {
-			return nil, fmt.Errorf("%s/%s is not a server's name: %s: rename it", dir, e, NameForm)
+			return nil, fmt.Errorf("%s/%s is not a server's name: %s: rename it", servers, e, NameForm)
 		}
 		names = append(names, e)
 	}
@@ -74,12 +74,12 @@ func Servers(m effect.Machine, mac string) ([]string, error) {
 // Pick returns the name of the server to act on: the one that flag names, or the only one where flag
 // is empty. It refuses a flag of a bad form or with no file, and no flag where there are none or
 // several.
-func Pick(m effect.Machine, mac, flag string) (string, error) {
-	dir := serversDir(mac)
+func Pick(m effect.Machine, root, flag string) (string, error) {
+	dir := serversDir(root)
 	if flag != "" && !IsName(flag) {
 		return "", fmt.Errorf("--server %s is not a server's name: %s", flag, NameForm)
 	}
-	names, err := Servers(m, mac)
+	names, err := Servers(m, root)
 	if err != nil {
 		return "", err
 	}

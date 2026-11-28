@@ -27,7 +27,7 @@ func newRemoveCmd(p enginecli.Env, server *string) *cobra.Command {
 			"a pull request, and from the repository's deploy keys. Where that fails, nothing else changes. Where " +
 			"known_hosts holds no key of NAME, where this Mac has no fnox key, or with --skip-secrets, as where the " +
 			"secrets are out of reach, it leaves them and prints what to do there by hand. It then deletes " +
-			"servers/NAME beside values.yml and NAME's entry in known_hosts, and leaves the server as it is. " +
+			"servers/NAME and NAME's entry in known_hosts, and leaves the server as it is. " +
 			"mise's bootstrap then takes its daemon, routes and host off. It refuses the Mac's last server, as " +
 			"the bootstrap takes a Mac with none for a stray WS_VALUES and prunes no daemon, and takes no --server: " +
 			"the argument is the consent.",
@@ -53,22 +53,18 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 	if server != "" {
 		return errors.New("remove takes the server's name alone")
 	}
-	mac := values.Path(p.Getenv, p.Pwd)
+	dir := values.Dir(p.Getenv, p.Pwd)
 	if !values.IsName(name) {
 		return fmt.Errorf("%s is not a server's name: %s", name, values.NameForm)
 	}
-	fleet := values.ReadFleet(p.Machine, mac)
-	// A bad values.yml is refused first and alone: no server is at fault.
-	if fleet.MacErr != nil {
-		return fleet.MacErr
-	}
+	fleet := values.ReadFleet(p.Machine, dir)
 	if fleet.NamesErr != nil {
 		return fleet.NamesErr
 	}
 	names := fleet.Names()
 	if !slices.Contains(names, name) {
 		return fmt.Errorf("no server named %s in %s, which holds %s", name,
-			path.Dir(path.Dir(values.ServerPath(mac, name))), values.List(names))
+			path.Dir(path.Dir(values.ServerPath(dir, name))), values.List(names))
 	}
 	if len(names) == 1 {
 		return fmt.Errorf("%s is the Mac's one server: with none, the bootstrap prunes no daemon, so remove leaves it", name)
@@ -99,12 +95,12 @@ func runRemove(c *cobra.Command, p enginecli.Env, server, name string, skip bool
 	if err := forgetHost(c, p, name); err != nil {
 		return err
 	}
-	dir := path.Dir(values.ServerPath(mac, name))
+	files := path.Dir(values.ServerPath(dir, name))
 	rm := p.Machine.Run
-	if etcws.Holds(dir) {
+	if etcws.Holds(files) {
 		rm = p.Machine.RunRoot
 	}
-	if _, err := rm(c.Context(), "rm", "-rf", dir); err != nil {
+	if _, err := rm(c.Context(), "rm", "-rf", files); err != nil {
 		return fmt.Errorf("cannot remove the files of %s: %w", name, err)
 	}
 	if _, err := fmt.Fprintf(c.OutOrStdout(), "removed %s\n", name); err != nil {

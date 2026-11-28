@@ -120,9 +120,7 @@ func newSetupCmd(p enginecli.Env, server *string, cfg setupConfig) *cobra.Comman
 		if err := setup.CheckInstalled(c.Context(), p.Machine, p.Version); err != nil {
 			return err
 		}
-		file := values.Path(p.Getenv, p.Pwd)
-		fleet := values.ReadFleet(p.Machine, file)
-		if err := fleet.Refusal(); err != nil {
+		if err := values.Check(p.Machine, values.Dir(p.Getenv, p.Pwd)); err != nil {
 			return err
 		}
 		term := effect.NewTerminal(c.ErrOrStderr())

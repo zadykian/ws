@@ -29,7 +29,6 @@ func macUnitEnv(t *testing.T, spec string) (enginecli.Env, *effecttest.Machine) 
 		t.Fatal(err)
 	}
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = nil
 	p := withEnv(fakeProcess(), map[string]string{"WS_UNITS": dir, "USER": "v", "HOME": "/Users/v"})
 	// ws runs in the specs' parent, as the plugin's hooks do in mise's run directory.
 	p.Machine, p.Pwd = m, filepath.Dir(dir)

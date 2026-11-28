@@ -6,15 +6,14 @@ import (
 	"testing"
 )
 
-// fleetOf returns the read of a machine with an empty values.yml and each server's file by name.
+// fleetOf returns the read of a machine with each server's file by name.
 func fleetOf(files map[string]string) Fleet {
 	m := machineWith()
-	m.Files[macPath] = nil
 	for name, text := range files {
 		m.Dirs[serversDirPath+"/"+name] = 0o755
-		m.Files[ServerPath(macPath, name)] = []byte(text)
+		m.Files[ServerPath(dirPath, name)] = []byte(text)
 	}
-	return ReadFleet(m, macPath)
+	return ReadFleet(m, dirPath)
 }
 
 func TestFleetGivesEachServerItsRefusalAlone(t *testing.T) {
@@ -52,7 +51,7 @@ func TestFleetLeavesARefusedFileOutOfTheClashes(t *testing.T) {
 func TestFleetRefusesEachRefusedServerInTheSiblingsWords(t *testing.T) {
 	f := fleetOf(map[string]string{"ws": Text("WS_SLOT", "999")})
 	err := f.Refused()
-	if want := "server ws: " + ServerPath(macPath, "ws") + ", line 1: WS_SLOT=999"; err == nil ||
+	if want := "server ws: " + ServerPath(dirPath, "ws") + ", line 1: WS_SLOT=999"; err == nil ||
 		!strings.HasPrefix(err.Error(), want) || !strings.HasSuffix(err.Error(), BadFileHint("ws", nil)) {
 		t.Errorf("Refused = %v, want %q first and the hint last", err, want)
 	}
@@ -71,15 +70,6 @@ func TestFleetHintsAtNoRemovalForAHostWithGuests(t *testing.T) {
 	}
 	if err := f.Without("g1").Without("g2").Refused(); err == nil || !strings.HasSuffix(err.Error(), BadFileHint("ws", nil)) {
 		t.Errorf("Refused with no guest left = %v, want the plain hint last", err)
-	}
-}
-
-func TestFleetKeepsAValuesFileRefusalApartFromTheServers(t *testing.T) {
-	m := machineWith("ws")
-	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
-	f := ReadFleet(m, macPath)
-	if f.MacErr == nil || f.Refused() != nil {
-		t.Errorf("MacErr = %v, Refused = %v; want the Mac's refusal alone", f.MacErr, f.Refused())
 	}
 }
 
@@ -142,21 +132,19 @@ func TestFleetCountsNoServerAsItsOwnGuest(t *testing.T) {
 	}
 }
 
-func TestFleetLoadRefusesTheMacsFileAndTheServers(t *testing.T) {
+func TestFleetLoadRefusesAServersBadFile(t *testing.T) {
 	m := machineWith("ws")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_TARGET", "cloud", "WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22"))
-	c, err := ReadFleet(m, macPath).Load("ws")
+	m.Files[ServerPath(dirPath, "ws")] = []byte(Text("WS_TARGET", "cloud", "WS_REMOTE", "r.example", "WS_REMOTE_PORT", "22"))
+	c, err := ReadFleet(m, dirPath).Load("ws")
 	if err != nil || c.Target != "cloud" {
 		t.Errorf("Load = %+v, %v", c, err)
 	}
-	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
-	m.Files[ServerPath(macPath, "ws")] = []byte(Text("WS_NOPE", "1"))
-	_, err = ReadFleet(m, macPath).Load("ws")
-	if err == nil || strings.Count(err.Error(), "\n") != 1 {
-		t.Errorf("Load = %v, want one refusal of each file", err)
+	m.Files[ServerPath(dirPath, "ws")] = []byte(Text("WS_NOPE", "1"))
+	_, err = ReadFleet(m, dirPath).Load("ws")
+	if err == nil || !strings.Contains(err.Error(), "unknown key WS_NOPE") {
+		t.Errorf("Load = %v, want the refusal of the file", err)
 	}
-	if _, err := ReadFleet(m, macPath).Load("none"); err == nil {
+	if _, err := ReadFleet(m, dirPath).Load("none"); err == nil {
 		t.Error("Load named a server that is none")
 	}
 }
@@ -164,8 +152,7 @@ func TestFleetLoadRefusesTheMacsFileAndTheServers(t *testing.T) {
 func TestFleetReadsNoServerBesideAMissingServersDir(t *testing.T) {
 	m := machineWith()
 	delete(m.Dirs, serversDirPath)
-	m.Files[macPath] = nil
-	if f := ReadFleet(m, macPath); len(f.Servers) != 0 || f.NamesErr != nil || f.MacErr != nil || errors.Join(f.Refused()) != nil {
+	if f := ReadFleet(m, dirPath); len(f.Servers) != 0 || f.NamesErr != nil || errors.Join(f.Refused()) != nil {
 		t.Errorf("ReadFleet = %+v, want an empty fleet", f)
 	}
 }

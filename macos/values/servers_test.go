@@ -15,7 +15,7 @@ func machineWith(names ...string) *effecttest.Machine {
 	m.Dirs[serversDirPath] = 0o755
 	for _, n := range names {
 		m.Dirs[serversDirPath+"/"+n] = 0o755
-		m.Files[ServerPath(macPath, n)] = nil
+		m.Files[ServerPath(dirPath, n)] = nil
 	}
 	return m
 }
@@ -35,31 +35,31 @@ func TestIsName(t *testing.T) {
 func TestServersListsTheDirectoriesThatHoldAServerFile(t *testing.T) {
 	m := machineWith("ws", "box")
 	m.Dirs[serversDirPath+"/.git"] = 0o755
-	m.Files[ServerPath(macPath, ".git")] = nil
+	m.Files[ServerPath(dirPath, ".git")] = nil
 	m.Dirs[serversDirPath+"/empty"] = 0o755
 	m.Files[serversDirPath+"/notes"] = nil
-	got, err := Servers(m, macPath)
+	got, err := Servers(m, dirPath)
 	if err != nil || strings.Join(got, ",") != "box,ws" {
 		t.Errorf("Servers = %v, %v; want box, ws", got, err)
 	}
 }
 
 func TestServersFindsNoneWithNoDirectory(t *testing.T) {
-	got, err := Servers(effecttest.NewMachine(), macPath)
+	got, err := Servers(effecttest.NewMachine(), dirPath)
 	if err != nil || len(got) != 0 {
 		t.Errorf("Servers = %v, %v; want none", got, err)
 	}
 }
 
 func TestServersRefusesABadNameThatHoldsAServerFile(t *testing.T) {
-	_, err := Servers(machineWith("Lab"), macPath)
+	_, err := Servers(machineWith("Lab"), dirPath)
 	want := serversDirPath + "/Lab is not a server's name: " + NameForm + ": rename it"
 	if err == nil || err.Error() != want {
 		t.Errorf("Servers error = %v, want %q", err, want)
 	}
 	m := machineWith("ws")
 	m.Dirs[serversDirPath+"/Lab"] = 0o755
-	if got, err := Servers(m, macPath); err != nil || len(got) != 1 {
+	if got, err := Servers(m, dirPath); err != nil || len(got) != 1 {
 		t.Errorf("Servers = %v, %v; a bad name with no values.yml is not a server", got, err)
 	}
 }
@@ -73,7 +73,7 @@ func TestPickTakesTheOneServerOrTheNamedOne(t *testing.T) {
 		{[]string{"box"}, "box", "box"},
 		{[]string{"box", "ws"}, "ws", "ws"},
 	} {
-		got, err := Pick(machineWith(tc.names...), macPath, tc.flag)
+		got, err := Pick(machineWith(tc.names...), dirPath, tc.flag)
 		if err != nil || got != tc.want {
 			t.Errorf("Pick(%v, %q) = %q, %v; want %q", tc.names, tc.flag, got, err, tc.want)
 		}
@@ -93,7 +93,7 @@ func TestPickRefuses(t *testing.T) {
 		{[]string{"box", "lab", "ws"}, "", "several servers in " + serversDirPath + ", box, lab and ws: name one by --server"},
 		{[]string{"box", "ws"}, "", "several servers in " + serversDirPath + ", box and ws: name one by --server"},
 	} {
-		_, err := Pick(machineWith(tc.names...), macPath, tc.flag)
+		_, err := Pick(machineWith(tc.names...), dirPath, tc.flag)
 		if err == nil || err.Error() != tc.want {
 			t.Errorf("Pick(%v, %q) error = %v, want %q", tc.names, tc.flag, err, tc.want)
 		}

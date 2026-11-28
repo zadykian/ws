@@ -18,9 +18,8 @@ var guestText = Text("WS_HOST", "ws", "WS_SLOT", "1", "WS_TUNNEL_PORT", "51821")
 
 func TestLoadGivesAGuestItsHostsWay(t *testing.T) {
 	m := machineWith("ws", "g1")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "ws")] = []byte(hostText)
-	m.Files[ServerPath(macPath, "g1")] = []byte(guestText)
+	m.Files[ServerPath(dirPath, "ws")] = []byte(hostText)
+	m.Files[ServerPath(dirPath, "g1")] = []byte(guestText)
 	c, err := loadNamed(m, "g1")
 	if err != nil {
 		t.Fatal(err)
@@ -35,9 +34,8 @@ func TestLoadGivesAGuestItsHostsWay(t *testing.T) {
 
 func TestLoadKeepsAHostsOwnWay(t *testing.T) {
 	m := machineWith("ws", "g1")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "ws")] = []byte(hostText)
-	m.Files[ServerPath(macPath, "g1")] = []byte(guestText)
+	m.Files[ServerPath(dirPath, "ws")] = []byte(hostText)
+	m.Files[ServerPath(dirPath, "g1")] = []byte(guestText)
 	c, err := loadNamed(m, "ws")
 	if err != nil || c.Host != "" || c.HostCable || c.CableService != "USB LAN" || c.Target != "lan" {
 		t.Errorf("Load = %+v, %v; want the host as its file gives it", c, err)
@@ -46,10 +44,9 @@ func TestLoadKeepsAHostsOwnWay(t *testing.T) {
 
 func TestLoadRefusesAHostThatIsNoServer(t *testing.T) {
 	m := machineWith("g1")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "g1")] = []byte(guestText)
+	m.Files[ServerPath(dirPath, "g1")] = []byte(guestText)
 	_, err := loadNamed(m, "g1")
-	want := ServerPath(macPath, "g1") + ": WS_HOST=ws names no server: " + ServerPath(macPath, "ws") + " is missing"
+	want := ServerPath(dirPath, "g1") + ": WS_HOST=ws names no server: " + ServerPath(dirPath, "ws") + " is missing"
 	if err == nil || !strings.HasPrefix(err.Error(), want) {
 		t.Errorf("err = %v, want %q first", err, want)
 	}
@@ -57,12 +54,11 @@ func TestLoadRefusesAHostThatIsNoServer(t *testing.T) {
 
 func TestLoadRefusesAHostThatIsAGuest(t *testing.T) {
 	m := machineWith("ws", "g1", "g2")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "ws")] = []byte(hostText)
-	m.Files[ServerPath(macPath, "g1")] = []byte(guestText)
-	m.Files[ServerPath(macPath, "g2")] = []byte(Text("WS_HOST", "g1", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51822"))
+	m.Files[ServerPath(dirPath, "ws")] = []byte(hostText)
+	m.Files[ServerPath(dirPath, "g1")] = []byte(guestText)
+	m.Files[ServerPath(dirPath, "g2")] = []byte(Text("WS_HOST", "g1", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51822"))
 	_, err := loadNamed(m, "g2")
-	want := ServerPath(macPath, "g2") + ": WS_HOST=g1 names a guest: a host is a server with a way of its own"
+	want := ServerPath(dirPath, "g2") + ": WS_HOST=g1 names a guest: a host is a server with a way of its own"
 	if err == nil || !strings.HasPrefix(err.Error(), want) {
 		t.Errorf("err = %v, want %q first", err, want)
 	}
@@ -77,7 +73,7 @@ func TestParseRefusesAGuestsOwnWay(t *testing.T) {
 		"cable p": Text("WS_CABLE_PORT", "en1"),
 		"cloud":   Text("WS_TARGET", "cloud", "WS_REMOTE", "a.b", "WS_REMOTE_PORT", "22"),
 	} {
-		_, errs := ServerFile.Parse(Text("WS_HOST", "ws") + keys)
+		_, errs := Parse(Text("WS_HOST", "ws") + keys)
 		if len(errs) != 1 || !strings.Contains(errs[0].Msg, "WS_HOST=ws names the host's way: a guest holds none of ") {
 			t.Errorf("%s: %v, want a guest's refusal", name, errs)
 		}
@@ -131,9 +127,8 @@ func TestClashesBetweenGuestsOfAHostWithNoRemoteFollowTheHost(t *testing.T) {
 
 func TestACheckRefusesAGuestWhoseHostIsGone(t *testing.T) {
 	m := machineWith("g1")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "g1")] = []byte(guestText)
-	err := Check(m, macPath)
+	m.Files[ServerPath(dirPath, "g1")] = []byte(guestText)
+	err := Check(m, dirPath)
 	if err == nil || !strings.Contains(err.Error(), "server g1: ") || !strings.Contains(err.Error(), "WS_HOST=ws names no server") {
 		t.Errorf("Check = %v, want g1's refusal", err)
 	}
@@ -141,8 +136,7 @@ func TestACheckRefusesAGuestWhoseHostIsGone(t *testing.T) {
 
 func TestLoadRefusesAGuestThatNamesItself(t *testing.T) {
 	m := machineWith("g1")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "g1")] = []byte(Text("WS_HOST", "g1"))
+	m.Files[ServerPath(dirPath, "g1")] = []byte(Text("WS_HOST", "g1"))
 	_, err := loadNamed(m, "g1")
 	if err == nil || !strings.Contains(err.Error(), "WS_HOST=g1 names the guest's own server") {
 		t.Errorf("err = %v, want the self-host refused", err)
@@ -151,11 +145,10 @@ func TestLoadRefusesAGuestThatNamesItself(t *testing.T) {
 
 func TestGuestsOfListsTheServersThatNameTheHost(t *testing.T) {
 	m := machineWith("ws", "g1", "g2", "box")
-	m.Files[macPath] = nil
-	m.Files[ServerPath(macPath, "g1")] = []byte(guestText)
-	m.Files[ServerPath(macPath, "g2")] = []byte(Text("WS_HOST", "ws", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51822"))
-	m.Files[ServerPath(macPath, "box")] = []byte(Text("WS_HOST", "other"))
-	got := ReadFleet(m, macPath).GuestsOf("ws")
+	m.Files[ServerPath(dirPath, "g1")] = []byte(guestText)
+	m.Files[ServerPath(dirPath, "g2")] = []byte(Text("WS_HOST", "ws", "WS_SLOT", "2", "WS_TUNNEL_PORT", "51822"))
+	m.Files[ServerPath(dirPath, "box")] = []byte(Text("WS_HOST", "other"))
+	got := ReadFleet(m, dirPath).GuestsOf("ws")
 	if len(got) != 2 || got[0] != "g1" || got[1] != "g2" {
 		t.Errorf("GuestsOf = %v; want g1 and g2", got)
 	}

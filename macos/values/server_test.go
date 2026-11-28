@@ -7,21 +7,20 @@ import (
 	"github.com/zadykian/ws/engine/core/effect"
 )
 
-// loadNamed returns the joined values of the server called name, as a command for one server reads them.
-func loadNamed(m effect.Machine, name string) (Conf, error) { return ReadFleet(m, macPath).Load(name) }
+// loadNamed returns the values of the server called name, as a command for one server reads them.
+func loadNamed(m effect.Machine, name string) (Conf, error) { return ReadFleet(m, dirPath).Load(name) }
 
-const macPath = "/h/.config/ws/values.yml"
+const dirPath = "/h/.config/ws"
 
-func TestServerPathIsBesideMacConf(t *testing.T) {
-	if got, want := ServerPath(macPath, "box"), "/h/.config/ws/servers/box/values.yml"; got != want {
+func TestServerPathIsBelowTheDirectory(t *testing.T) {
+	if got, want := ServerPath(dirPath, "box"), "/h/.config/ws/servers/box/values.yml"; got != want {
 		t.Errorf("ServerPath = %q, want %q", got, want)
 	}
 }
 
-func TestLoadJoinsTheTwoFiles(t *testing.T) {
+func TestLoadReadsTheServersFile(t *testing.T) {
 	m := machineWith("ws")
-	server := ServerPath(macPath, FirstServer)
-	m.Files[macPath] = nil
+	server := ServerPath(dirPath, FirstServer)
 	m.Files[server] = []byte(Text(
 		"WS_TARGET", "cloud",
 		"WS_REMOTE", "r.example",
@@ -38,38 +37,19 @@ func TestLoadJoinsTheTwoFiles(t *testing.T) {
 
 func TestLoadKeepsADefaultWhereAFileHasNoLine(t *testing.T) {
 	m := machineWith("ws")
-	server := ServerPath(macPath, FirstServer)
-	m.Files[macPath], m.Files[server] = nil, nil
+	server := ServerPath(dirPath, FirstServer)
+	m.Files[server] = nil
 	c, err := loadNamed(m, FirstServer)
 	if err != nil || c.Target != "lan" {
 		t.Errorf("Load = %+v, %v; want the defaults", c, err)
 	}
 }
 
-func TestLoadRefusesAServersKeyInTheMacsFile(t *testing.T) {
-	m := machineWith("ws")
-	m.Files[macPath] = []byte(Text("WS_TARGET", "lan"))
-	m.Files[ServerPath(macPath, FirstServer)] = nil
-	_, err := loadNamed(m, FirstServer)
-	want := macPath + ", line 1: WS_TARGET is a server's key: it goes in servers/NAME/values.yml, beside the Mac's values.yml"
-	if err == nil || err.Error() != want {
-		t.Errorf("err = %v, want %q", err, want)
-	}
-}
-
-func TestLoadSaysWhichValuesFileIsMissing(t *testing.T) {
-	m := machineWith("ws")
-	if _, err := loadNamed(m, "ws"); err == nil || !strings.HasPrefix(err.Error(), macPath+" is missing:") {
-		t.Errorf("err = %v, want values.yml missing", err)
-	}
-}
-
 func TestLoadRefusesANetworkThatAnotherServerRoutes(t *testing.T) {
 	m := machineWith("ws", "lab")
-	server := ServerPath(macPath, "ws")
-	m.Files[macPath] = nil
+	server := ServerPath(dirPath, "ws")
 	m.Files[server] = []byte(Text("WS_TUNNEL_NETWORKS", "10.1.0.0/24"))
-	m.Files[ServerPath(macPath, "lab")] = []byte(Text("WS_TUNNEL_NETWORKS", "10.1.0.0/16"))
+	m.Files[ServerPath(dirPath, "lab")] = []byte(Text("WS_TUNNEL_NETWORKS", "10.1.0.0/16"))
 	_, err := loadNamed(m, "ws")
 	if want := server + ": WS_TUNNEL_NETWORKS's 10.1.0.0/24 overlaps server lab's"; err == nil || !strings.HasPrefix(err.Error(), want) {
 		t.Errorf("err = %v, want %q first", err, want)

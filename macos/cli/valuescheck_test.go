@@ -19,18 +19,16 @@ func TestValuesCheckPrintsOneLineForFilesThatPass(t *testing.T) {
 	}
 }
 
-func TestValuesCheckNamesEachBadKeyWithItsFile(t *testing.T) {
+func TestValuesCheckNamesTheBadKeyWithItsFile(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/bad/values.yml"] = []byte(values.Text("WS_TARGET", "lan"))
 	m.Files["/bad/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "999"))
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/bad/values.yml"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/bad"})
 	p.Machine = withServerDirs(m)
 	status, _, stderr := runWs(p, "macos", "values", "check")
 	if status != 1 {
 		t.Errorf("status = %d, want 1", status)
 	}
 	for _, want := range []string{
-		"/bad/values.yml, line 1: WS_TARGET is a server's key",
 		"/bad/servers/ws/values.yml, line 1: WS_SLOT=999 is not a number from 0 to",
 	} {
 		if !strings.Contains(stderr, want) {

@@ -11,9 +11,8 @@ import (
 
 // serversFixture is ws on the LAN with a running tunnel, and lab in the cloud with none.
 func serversFixture() (*effecttest.Machine, func(...string) (int, string, string)) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e"})
 	m := p.Machine.(*effecttest.Machine)
-	m.Files["/e/values.yml"] = []byte("")
 	m.Files["/e/servers/ws/values.yml"] = []byte(values.Text("WS_SLOT", "0"))
 	m.Files["/e/servers/lab/values.yml"] = []byte(values.Text(
 		"WS_TARGET", "cloud",
@@ -80,56 +79,20 @@ func TestServersNamesTheFileItRefuses(t *testing.T) {
 }
 
 func TestServersWithNoneSaysHowToAddOne(t *testing.T) {
-	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e/values.yml"})
-	p.Machine.(*effecttest.Machine).Files["/e/values.yml"] = []byte("")
+	p := withEnv(fakeProcess(), map[string]string{"WS_VALUES": "/e"})
 	status, _, stderr := runWs(p, "macos", "servers")
-	if status != 1 || !strings.Contains(stderr, "no server beside /e/values.yml: write NAME/values.yml there, as macos/README.md says") {
+	if status != 1 || !strings.Contains(stderr, "no server in /e/servers: write NAME/values.yml there, as macos/README.md says") {
 		t.Errorf("status = %d, stderr = %q", status, stderr)
 	}
 }
 
-func TestServersSaysAMissingMacConfOnce(t *testing.T) {
+// TestServersRefusesABadNameAlone checks that a bad name in servers/ is refused with no row.
+func TestServersRefusesABadNameAlone(t *testing.T) {
 	m, run := serversFixture()
-	delete(m.Files, "/e/values.yml")
-	_, _, stderr := run()
-	if n := strings.Count(stderr, "/e/values.yml is missing"); n != 1 {
-		t.Errorf("stderr says values.yml is missing %d times, want once: %q", n, stderr)
-	}
-}
-
-func TestServersRefusesABadMacFileOnce(t *testing.T) {
-	m, run := serversFixture()
-	m.Files["/e/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
+	m.Files["/e/servers/Lab/values.yml"] = []byte(values.Text("WS_SLOT", "2"))
+	withServerDirs(m)
 	status, stdout, stderr := run()
-	if status != 1 || stdout != "" || strings.Count(stderr, "/e/values.yml") != 1 || strings.Contains(stderr, "fix its file") {
-		t.Errorf("status = %d, stdout = %q, stderr = %q; want 1 and one refusal of values.yml alone", status, stdout, stderr)
-	}
-}
-
-// TestServersRefusesABadMacFileBeforeABadName checks that values.yml is refused first and alone,
-// where servers/ holds a bad name or no server, as the values page says.
-func TestServersRefusesABadMacFileBeforeABadName(t *testing.T) {
-	for name, set := range map[string]func(m *effecttest.Machine){
-		"a bad name": func(m *effecttest.Machine) {
-			m.Files["/e/servers/Lab/values.yml"] = []byte(values.Text("WS_SLOT", "2"))
-			withServerDirs(m)
-		},
-		"no server": func(m *effecttest.Machine) {
-			for f := range m.Files {
-				if strings.HasPrefix(f, "/e/servers/") {
-					delete(m.Files, f)
-				}
-			}
-		},
-	} {
-		m, run := serversFixture()
-		m.Files["/e/values.yml"] = []byte(values.Text("WS_SLOT", "3"))
-		set(m)
-		status, stdout, stderr := run()
-		if status != 1 || stdout != "" || strings.Count(stderr, "/e/values.yml") != 1 ||
-			strings.Contains(stderr, "not a server's name") || strings.Contains(stderr, "no server beside") {
-			t.Errorf("%s: status = %d, stdout = %q, stderr = %q; want 1 and values.yml's refusal alone", name, status,
-				stdout, stderr)
-		}
+	if status != 1 || stdout != "" || strings.Count(stderr, "not a server's name") != 1 {
+		t.Errorf("status = %d, stdout = %q, stderr = %q; want 1 and the name's refusal alone", status, stdout, stderr)
 	}
 }

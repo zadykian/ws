@@ -70,7 +70,7 @@ func newNetworksCmd(p enginecli.Env) *cobra.Command {
 
 // serversOf reads each server's values, checked as the units' facts are.
 func serversOf(p enginecli.Env) ([]facts.Server, error) {
-	return facts.Servers(p.Machine, values.Path(p.Getenv, p.Pwd))
+	return facts.Servers(p.Machine, values.Dir(p.Getenv, p.Pwd))
 }
 
 // homeOf returns the user's home from HOME.

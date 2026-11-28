@@ -107,7 +107,6 @@ func TestTunnelConfPrunesAGoneServer(t *testing.T) {
 
 func TestTunnelConfPrunesNothingWithNoServer(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Files["/etc/ws/values.yml"] = []byte("")
 	m.Dirs["/etc/ws/tunnel"], m.Dirs["/etc/ws/tunnel/ws"] = 0o755, 0o755
 	m.Results["launchctl print system/"+labelOf("ws")] = effecttest.Result{}
 	if status, _, stderr := partEnv(m)("tunnel", "conf", "--check"); status != 0 {
