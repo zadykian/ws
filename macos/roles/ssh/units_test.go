@@ -23,7 +23,10 @@ const unitsConfig = "# Written by github.com/zadykian/ws\nHost ws\n"
 const misesSeward = "/Users/v/.local/share/mise/installs/github-zadykian-seward/0.1.0/seward"
 
 // macUnits loads the role's units on a Mac of the user v, whose ws is /ws.
-func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
+func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit { return unitsOn(t, m, false) }
+
+// unitsOn is macUnits on a virtual machine where vm is set.
+func unitsOn(t *testing.T, m *effecttest.Machine, vm bool) []kind.Unit {
 	fsys := fstest.MapFS{}
 	for _, name := range []string{"units.toml.tmpl", "files/ssh_config.tmpl"} {
 		text, err := os.ReadFile(name) //nolint:gosec // a file of the role, named above
@@ -38,7 +41,7 @@ func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 	m.Dirs["/Users/v"], m.Dirs["/etc"] = 0o750, 0o755
 	m.Owners["/Users/v"] = [2]int{501, 20}
 	units, err := kind.Load(kind.Env{M: m, Out: &effecttest.Out{}, Self: "/ws", System: kind.MacOS, User: "v",
-		Data: facts.Mac{User: "v", Home: "/Users/v", SSH: facts.SSH{Config: unitsConfig, SewardFrom: misesSeward}}}, fsys)
+		Data: facts.Mac{User: "v", Home: "/Users/v", VM: vm, SSH: facts.SSH{Config: unitsConfig, SewardFrom: misesSeward}}}, fsys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +50,6 @@ func macUnits(t *testing.T, m *effecttest.Machine) []kind.Unit {
 
 func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	m := effecttest.NewMachine()
-	m.Results[userPath+"/ws macos keys --check"] = effecttest.Result{}
 	m.Results[userPath+"mkdir -m 700 /Users/v/.ssh"] = effecttest.Result{}
 	m.Results["ssh -G -F /etc/ws/ssh_config.ws-check localhost"] = effecttest.Result{}
 	m.Results["/ws macos ssh included"] = effecttest.Result{Err: exited("exit 1")}
@@ -55,9 +57,9 @@ func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	m.Dirs["/Users/v/.ssh"], m.Owners["/Users/v/.ssh"] = 0o700, [2]int{501, 20}
 	units := macUnits(t, m)
 	// The fake's has answers alike whatever the file holds, so each unit applies once, and has
-	// answers 0 after. state/seward has a test of its own.
+	// answers 0 after. The units of seward and its keys have tests of their own.
 	for _, u := range units {
-		if u.Name == "state/seward" {
+		if hasOwnTest(u.Name) {
 			continue
 		}
 		p, err := u.Step.Plan(t.Context())
@@ -77,7 +79,7 @@ func TestSSHUnitsWriteTheHostsAndTheInclude(t *testing.T) {
 	}
 	m.Results["/ws macos ssh included"] = effecttest.Result{}
 	for _, u := range units {
-		if u.Name == "state/seward" {
+		if hasOwnTest(u.Name) {
 			continue
 		}
 		if p, err := u.Step.Plan(t.Context()); err != nil || len(p.Changes) > 0 {
@@ -119,6 +121,74 @@ func TestSSHUnitCopiesSewardAsRoot(t *testing.T) {
 		return
 	}
 	t.Error("the role has no state/seward")
+}
+
+// TestSSHKeyUnitsMakeTheKeysAsTheUser: each key's unit runs seward's keygen as the user, never
+// through sudo, and with --store file on a virtual machine alone. It runs where the key or its .pub
+// is missing, as keygen writes a lost .pub again, and not where both are there.
+func TestSSHKeyUnitsMakeTheKeysAsTheUser(t *testing.T) {
+	const runs = "env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin /usr/local/bin/seward keygen "
+	for _, vm := range []bool{false, true} {
+		store := ""
+		if vm {
+			store = " --store file"
+		}
+		for _, name := range []string{"ws-auth", "ws-sign"} {
+			key := "/Users/v/.ssh/" + name
+			for _, have := range [][]string{nil, {key}, {key + ".pub"}, {key, key + ".pub"}} {
+				m := effecttest.NewMachine()
+				m.Results[runs+name+store] = effecttest.Result{}
+				for _, f := range have {
+					m.Files[f] = []byte("x")
+				}
+				u := unitNamed(t, unitsOn(t, m, vm), "state/ssh-"+strings.TrimPrefix(name, "ws-")+"-key")
+				p, err := u.Step.Plan(t.Context())
+				if err != nil {
+					t.Fatal(err)
+				}
+				if want := len(have) < 2; (len(p.Changes) > 0) != want {
+					t.Errorf("%s, vm %v, files %q: changes = %v, want a run: %v", name, vm, have, p.Changes, want)
+				}
+				if len(p.Changes) == 0 {
+					continue
+				}
+				if err := u.Step.Apply(t.Context(), p); err != nil {
+					t.Fatal(err)
+				}
+				if !slices.Contains(m.Calls, "run "+runs+name+store) || slices.ContainsFunc(m.Calls, func(c string) bool { return strings.HasPrefix(c, "root ") }) {
+					t.Errorf("%s, vm %v: calls = %q, want keygen as the user alone, with a store where vm", name, vm, m.Calls)
+				}
+			}
+		}
+	}
+}
+
+// TestSSHConfigFollowsTheLoginKey: ssh's text names the login key's .pub, so the file goes in once
+// the unit that makes the key has run.
+func TestSSHConfigFollowsTheLoginKey(t *testing.T) {
+	var names []string
+	for _, u := range macUnits(t, effecttest.NewMachine()) {
+		names = append(names, u.Name)
+	}
+	if key, config := slices.Index(names, "state/ssh-auth-key"), slices.Index(names, "file/ssh-config"); key < 0 || config < key {
+		t.Errorf("units run in the order %q, want state/ssh-auth-key before file/ssh-config", names)
+	}
+}
+
+// hasOwnTest is true of the units that seward's tests plan and apply on their own.
+func hasOwnTest(name string) bool {
+	return slices.Contains([]string{"state/seward", "state/ssh-auth-key", "state/ssh-sign-key"}, name)
+}
+
+// unitNamed returns the unit called name.
+func unitNamed(t *testing.T, units []kind.Unit, name string) kind.Unit {
+	for _, u := range units {
+		if u.Name == name {
+			return u
+		}
+	}
+	t.Fatalf("the role has no %s", name)
+	return kind.Unit{}
 }
 
 func TestSSHIncludeRefusesAnIncludeBelow(t *testing.T) {

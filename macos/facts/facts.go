@@ -10,7 +10,6 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/keys"
 	"github.com/zadykian/ws/macos/roles/ghostty"
 	"github.com/zadykian/ws/macos/roles/git"
 	"github.com/zadykian/ws/macos/roles/ssh"
@@ -21,6 +20,8 @@ import (
 type Mac struct {
 	// User is the account that ws runs as, and Home its home.
 	User, Home string
+	// VM is true on a virtual machine, which has no Secure Enclave: seward's keys go in a file there.
+	VM bool
 	// Servers holds each server of servers/ beside values.yml, by name.
 	Servers []Server
 	// Ghostty is what Ghostty's units need of the Mac.
@@ -68,13 +69,14 @@ type Server struct {
 
 // Read reads the facts from the environment, Ghostty's configs and the values' files. It reads
 // values.yml from WS_VALUES or /etc/ws first, then each server's file beside it. A bad values.yml
-// fails the read alone. Any other refusal, a missing key or a config that ssh refuses fails it
-// too, and mise stops before a change. A Mac with no server yet reads none.
+// fails the read alone. Any other refusal, or a config that ssh refuses, fails it too, and mise
+// stops before a change. A Mac with no server yet reads none.
 func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd string) (Mac, error) {
 	f := Mac{User: getenv("USER"), Home: getenv("HOME")}
 	if f.User == "" || !path.IsAbs(f.Home) {
 		return Mac{}, fmt.Errorf("USER %q and HOME %q name no user: run it from the user's own shell", f.User, f.Home)
 	}
+	f.VM = onVM(ctx, m)
 	f.Ghostty.Config = ghostty.ConfigPath(m, f.Home)
 	mac := values.Path(getenv, pwd)
 	fleet := values.ReadFleet(m, mac)
@@ -82,16 +84,11 @@ func Read(ctx context.Context, m effect.Machine, getenv func(string) string, pwd
 	if f.Servers, err = serversOf(fleet); err != nil {
 		return Mac{}, err
 	}
-	own := fleet.Mac
-	if f.SSH, err = f.readSSH(ctx, m, own); err != nil {
+	if f.SSH, err = f.readSSH(ctx, m); err != nil {
 		return Mac{}, err
 	}
 	f.SSH.SewardFrom = toolFrom(ctx, m, "seward")
-	signing, err := keys.ReadKey(ctx, m, own, f.Home, keys.SigningKey)
-	if err != nil {
-		return Mac{}, err
-	}
-	f.Git = Git{Texts: git.TextsOf(f.Home, signing), GhFrom: toolFrom(ctx, m, "gh")}
+	f.Git = Git{Texts: git.TextsOf(f.Home), GhFrom: toolFrom(ctx, m, "gh")}
 	f.Secrets = Secrets{FnoxFrom: toolFrom(ctx, m, "fnox"), PluginFrom: toolFrom(ctx, m, "age-plugin-yubikey")}
 	return f, nil
 }
@@ -119,18 +116,21 @@ func serversOf(fleet values.Fleet) ([]Server, error) {
 	return servers, fleet.Refused()
 }
 
-// readSSH reads the login key and returns ssh's text, a block for each server.
-func (f Mac) readSSH(ctx context.Context, m effect.Machine, own values.Conf) (SSH, error) {
-	login, err := keys.ReadKey(ctx, m, own, f.Home, keys.LoginKey)
-	if err != nil {
-		return SSH{}, err
-	}
+// readSSH returns ssh's text, a block for each server.
+func (f Mac) readSSH(ctx context.Context, m effect.Machine) (SSH, error) {
 	hosts := make([]sshcfg.Host, 0, len(f.Servers))
 	for _, s := range f.Servers {
 		hosts = append(hosts, sshcfg.Host{Name: s.Name, Addr: s.TunnelSlot().Server()})
 	}
-	text, err := ssh.Text(ctx, m, f.Home, login, hosts)
+	text, err := ssh.Text(ctx, m, f.Home, hosts)
 	return SSH{Config: text}, err
+}
+
+// onVM reports whether the hypervisor bit is set, as sysctl kern.hv_vmm_present prints 1. A sysctl
+// that fails or prints anything else reads as a real Mac.
+func onVM(ctx context.Context, m effect.Machine) bool {
+	out, err := m.Run(ctx, "sysctl", "-n", "kern.hv_vmm_present")
+	return err == nil && strings.TrimSpace(string(out)) == "1"
 }
 
 // toolFrom returns where mise installed the tool name for the tree, as the user's mise finds it,

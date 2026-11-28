@@ -33,7 +33,7 @@ type Inputs struct {
 	Patterns string
 	// IdentityPub is the .pub of the key ssh offers ws, as the file names it.
 	IdentityPub string
-	// IdentityAgent is that key's agent socket, or empty for a key in a file.
+	// IdentityAgent is the socket of the agent that holds that key.
 	IdentityAgent string
 }
 
@@ -71,16 +71,11 @@ Host %[1]s
 	return b.String()
 }
 
-// identityLines are the lines for the key that ssh offers ws alone: with an agent, the agent's key
-// that matches the .pub. Else the file beside the .pub, whose passphrase the Keychain keeps, and
-// which the agent takes once ssh has read it.
+// identityLines are the lines for the key that ssh offers ws alone: the agent's key that matches
+// the .pub.
 func identityLines(in Inputs) string {
-	if in.IdentityAgent != "" {
-		return fmt.Sprintf("    IdentityFile %s\n    IdentitiesOnly yes\n    IdentityAgent \"%s\"\n",
-			in.IdentityPub, in.IdentityAgent)
-	}
-	return fmt.Sprintf("    IdentityFile %s\n    IdentitiesOnly yes\n    UseKeychain yes\n    AddKeysToAgent yes\n",
-		strings.TrimSuffix(in.IdentityPub, ".pub"))
+	return fmt.Sprintf("    IdentityFile %s\n    IdentitiesOnly yes\n    IdentityAgent \"%s\"\n",
+		in.IdentityPub, in.IdentityAgent)
 }
 
 // cldLines end the last block with the lines that start cld's tab restorer. ssh runs LocalCommand

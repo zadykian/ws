@@ -2,13 +2,11 @@ package facts
 
 import (
 	"errors"
-	"io/fs"
 	"strings"
 	"testing"
 
 	"github.com/zadykian/ws/engine/core/effect/effecttest"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/mactest"
 	"github.com/zadykian/ws/macos/values"
 )
 
@@ -17,14 +15,12 @@ func env(k string) string {
 	return map[string]string{"USER": "v", "HOME": "/Users/v"}[k]
 }
 
-// mac is a machine with values.yml, which names a file key for login and signing, and a file for
+// mac is a machine with values.yml, which names a key for login and signing, and a file for
 // each server, its text by name. ssh takes each server's block, and mise has no gh yet.
 func mac(servers map[string]string) *effecttest.Machine {
 	m := effecttest.NewMachine()
 	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub",
 		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
-	m.Files["/Users/v/.ssh/id.pub"] = []byte("ssh-ed25519 AAAA me\n")
-	m.Results["ssh-keygen -l -f /Users/v/.ssh/id.pub"] = effecttest.Result{}
 	m.Results["mktemp -d"] = effecttest.Result{Out: []byte("/tmp/x\n")}
 	m.Results["rm -rf /tmp/x"] = effecttest.Result{}
 	m.Dirs["/etc/ws/servers"] = 0o755
@@ -105,15 +101,28 @@ func TestReadWithoutServers(t *testing.T) {
 	}
 }
 
-func TestReadNeedsTheKeys(t *testing.T) {
+func TestReadNeedsValuesYml(t *testing.T) {
 	m := mac(nil)
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub"))
-	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "WS_GIT_SIGNING_PUB_KEY") {
-		t.Errorf("read = %v, want the signing key asked for", err)
-	}
 	delete(m.Files, "/etc/ws/values.yml")
 	if _, err := Read(t.Context(), m, env, "/p"); err == nil || !strings.Contains(err.Error(), "values.yml is missing") {
 		t.Errorf("read = %v, want values.yml asked for", err)
+	}
+}
+
+// TestSSHFactsReadNoKey pins that ssh's text names seward's login key whatever values.yml names:
+// the key's .pub is made by a unit, after the facts are read.
+func TestSSHFactsReadNoKey(t *testing.T) {
+	m := mac(map[string]string{"ws": values.Text("WS_SLOT", "0")})
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/other.pub",
+		"WS_GIT_SIGNING_PUB_KEY", "~/.ssh/id.pub"))
+	f, err := Read(t.Context(), m, env, "/p")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"IdentityFile ~/.ssh/ws-auth.pub\n", "IdentityAgent \"~/.ssh/seward.sock\"\n"} {
+		if !strings.Contains(f.SSH.Config, want) {
+			t.Errorf("ssh_config lacks %q:\n%s", want, f.SSH.Config)
+		}
 	}
 }
 
@@ -126,7 +135,7 @@ func TestSSHFactsMatchSshcfg(t *testing.T) {
 	want := sshcfg.Config(sshcfg.Inputs{
 		Hosts:       []sshcfg.Host{{Name: "ws", Addr: f.Servers[0].TunnelSlot().Server()}},
 		Patterns:    "UseKeychain",
-		IdentityPub: "~/.ssh/id.pub",
+		IdentityPub: "~/.ssh/ws-auth.pub", IdentityAgent: "~/.ssh/seward.sock",
 	})
 	if f.SSH.Config != want {
 		t.Errorf("ssh_config = %q, want sshcfg's %q", f.SSH.Config, want)
@@ -161,34 +170,29 @@ func TestSSHFactsPredictCldsTabs(t *testing.T) {
 	}
 }
 
-func TestGitFactsNameUsrLocalGh(t *testing.T) {
+func TestGitFactsSignWithSewardsKey(t *testing.T) {
 	f, err := Read(t.Context(), mac(nil), env, "/p")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(f.Git.Config, "!/usr/local/bin/gh auth git-credential") || f.Git.Keygen != "" {
-		t.Errorf("gitconfig = %q, keygen %q; want the credential command at /usr/local/bin/gh, and no script for a file key",
-			f.Git.Config, f.Git.Keygen)
+	for _, want := range []string{"!/usr/local/bin/gh auth git-credential", "\tsigningkey = \"/Users/v/.ssh/ws-sign.pub\"\n",
+		"\tprogram = \"/etc/ws/ssh-keygen\"\n"} {
+		if !strings.Contains(f.Git.Config, want) {
+			t.Errorf("gitconfig lacks %q:\n%s", want, f.Git.Config)
+		}
 	}
-	if !strings.Contains(f.Git.Signers, "ssh-ed25519 AAAA") {
-		t.Errorf("allowed_signers = %q, want the key", f.Git.Signers)
+	if !strings.Contains(f.Git.Keygen, "SSH_AUTH_SOCK='/Users/v/.ssh/seward.sock'") {
+		t.Errorf("keygen = %q, want seward's socket", f.Git.Keygen)
 	}
 }
 
-func TestGitFactsWithSecretive(t *testing.T) {
+// TestGitFactsReadNoKey pins that git's text names seward's signing key whatever values.yml names:
+// the key is made by a unit, after the facts are read.
+func TestGitFactsReadNoKey(t *testing.T) {
 	m := mac(nil)
-	socket := "/Users/v/" + sshcfg.SecretiveData + "/socket.ssh"
-	m.Files[socket], m.Modes[socket] = nil, fs.ModeSocket
-	m.Results["env SSH_AUTH_SOCK="+socket+" ssh-add -L"] = effecttest.Result{Out: []byte(mactest.AgentGit)}
-	pub := sshcfg.AgentKeys(mactest.AgentGit)[0].Pub()
-	m.Files["/etc/ws/values.yml"] = []byte(values.Text("WS_IDENTITY_PUB_KEY", "~/.ssh/id.pub", "WS_GIT_SIGNING_PUB_KEY", pub))
-	f, err := Read(t.Context(), m, env, "/p")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(f.Git.Keygen, "SSH_AUTH_SOCK='/Users/v/"+sshcfg.SecretiveData+"/socket.ssh'") ||
-		!strings.Contains(f.Git.Config, "/etc/ws/secretive-ssh-keygen") {
-		t.Errorf("keygen = %q, gitconfig = %q; want the script, named as git's program", f.Git.Keygen, f.Git.Config)
+	m.Files["/etc/ws/values.yml"] = []byte(values.Text())
+	if f, err := Read(t.Context(), m, env, "/p"); err != nil || !strings.Contains(f.Git.Config, "/Users/v/.ssh/ws-sign.pub") {
+		t.Errorf("read = %q, %v; want seward's key with no key named", f.Git.Config, err)
 	}
 }
 
@@ -228,6 +232,19 @@ func TestSSHFactsSewardFromMise(t *testing.T) {
 	m.Results["mise -C /opt/ws/macos which seward"] = effecttest.Result{Out: []byte(seward + "\n")}
 	if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.SSH.SewardFrom != seward {
 		t.Errorf("read = %q, %v; want mise's seward", f.SSH.SewardFrom, err)
+	}
+}
+
+func TestVMFactIsTheHypervisorBit(t *testing.T) {
+	for out, want := range map[string]bool{"1\n": true, "0\n": false, "": false} {
+		m := mac(nil)
+		m.Results["sysctl -n kern.hv_vmm_present"] = effecttest.Result{Out: []byte(out)}
+		if f, err := Read(t.Context(), m, env, "/p"); err != nil || f.VM != want {
+			t.Errorf("sysctl prints %q: VM = %v, %v; want %v", out, f.VM, err, want)
+		}
+	}
+	if f, err := Read(t.Context(), mac(nil), env, "/p"); err != nil || f.VM {
+		t.Errorf("with no sysctl answer: VM = %v, %v; want false and no error", f.VM, err)
 	}
 }
 

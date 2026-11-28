@@ -34,9 +34,9 @@ which mise would refuse.
 - `~/.local/bin` first on `PATH`, once in a nest of shells, and `GPG_TTY`, which gpg-agent's
   pinentry reads.
 - `genpass`, an alias of `pwgen -s 24 1`: [devtools](../devtools/README.md) installs pwgen.
-- `SSH_AUTH_SOCK` as Secretive's agent, where its socket exists. A Mac with a key in a file has no
-  socket, and keeps the agent that macOS starts. ssh and git reach Secretive's agent by their own
-  settings, so the variable serves other programs.
+- `SSH_AUTH_SOCK` as seward's agent, `~/.ssh/seward.sock`, where the socket exists. Until the agent
+  runs there is none, and the shell keeps the agent that macOS starts. ssh and git reach seward's
+  agent by their own settings, so the variable serves other programs.
 
 The unit `file/zsh-rc` writes the file whole as root, and an interactive `zsh` reads it as the
 user. oh-my-zsh's hooks run before the hook's, so the file moves the hook's `precmd` to the front,

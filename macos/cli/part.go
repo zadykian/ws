@@ -36,7 +36,7 @@ func newCldCmd(p enginecli.Env) *cobra.Command {
 		})
 }
 
-// newKeysCmd returns ws macos keys, which the keys' unit runs.
+// newKeysCmd returns ws macos keys.
 func newKeysCmd(p enginecli.Env) *cobra.Command {
 	return enginecli.Procedure("keys", "copy the .pub of each key of Secretive's that values.yml names into /etc/ws",
 		"ssh and git name a key that Secretive's agent holds by its .pub, which macOS keeps ws from "+

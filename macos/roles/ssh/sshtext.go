@@ -8,15 +8,16 @@ import (
 
 	"github.com/zadykian/ws/engine/core/effect"
 	"github.com/zadykian/ws/internal/sshcfg"
-	"github.com/zadykian/ws/macos/internal/keys"
+	"github.com/zadykian/ws/macos/internal/seward"
 	"github.com/zadykian/ws/macos/roles/cld"
 )
 
-// Text returns /etc/ws/ssh_config: a block for each of hosts, which offers key. It stops where a Host
-// of ~/.ssh/config names a server. It stops where ssh refuses the text, alone or read whole with
-// ~/.ssh/config and the system's file, so that a bootstrap stops before any change. It reads as the
-// user, and writes in a scratch directory alone. With no host there is nothing for ssh to read.
-func Text(ctx context.Context, m effect.Machine, home string, key keys.NamedKey, hosts []sshcfg.Host) (string, error) {
+// Text returns /etc/ws/ssh_config: a block for each of hosts, which offers seward's login key through
+// its agent. It stops where a Host of ~/.ssh/config names a server. It stops where ssh refuses the
+// text, alone or read whole with ~/.ssh/config and the system's file, so that a bootstrap stops
+// before any change. It reads as the user, and writes in a scratch directory alone. With no host
+// there is nothing for ssh to read.
+func Text(ctx context.Context, m effect.Machine, home string, hosts []sshcfg.Host) (string, error) {
 	u, err := readUserConfig(m, home)
 	if err != nil {
 		return "", err
@@ -27,7 +28,7 @@ func Text(ctx context.Context, m effect.Machine, home string, key keys.NamedKey,
 	text := sshcfg.Config(sshcfg.Inputs{
 		Hosts:       hosts,
 		Patterns:    sshcfg.IgnoreUnknown(u.Text, "UseKeychain"),
-		IdentityPub: key.Pub, IdentityAgent: key.Agent, CldTabs: tabsAhead(ctx, m, home),
+		IdentityPub: seward.AuthPub, IdentityAgent: seward.Socket, CldTabs: tabsAhead(ctx, m, home),
 	})
 	if len(hosts) == 0 {
 		return text, nil

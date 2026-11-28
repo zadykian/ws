@@ -5,8 +5,8 @@ and cld on the Mac](../../macos/roles/ghostty/README.md) and [Zed on the
 Mac](../../macos/roles/zed/README.md) say. It runs `ws macos setup`
 as the runbook does, on the tree that
 [client-mise.sh](../client-mise.sh) puts in place, on a runner without Ghostty, Zed, its font, Secretive or cld. It
-has a stand-in for ws's key, and a file key that `values.yml` names for ws's login and for git's
-signing.
+has a stand-in for ws's key, and `values.yml` names seward's two keys, which the units make, so
+that setup's key step plans nothing.
 
 - Two runs must install Ghostty, Zed and the font as mise's casks, which `mise bootstrap packages
   status` names as mise's, and cld from its release. The facts read Ghostty's app and cld as a run
@@ -16,7 +16,8 @@ signing.
   must read it once. Ghostty's `+validate-config` must take the config, and `+list-fonts` find its
   font. Zed's files must be those of `macos/roles/zed/files/`, with the seed of
   `settings.json`.
-- A third run must call no sudo, and its plan exit 0, with seward's agent, mise's user service, running.
+- A third run must call no sudo, and its plan exit 0, with seward's agent, mise's user service,
+  running. The same units make `ws-auth` and `ws-sign` in the file store.
 - `ssh -G ws` must give the watcher's lines where Ghostty's app is there and cld is a release or
   has `restore tabs`. A stub of an older release must be updated by its unit, keep the lines, and
   have its line start the watcher in a Ghostty pane alone.

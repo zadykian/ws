@@ -1,1 +1,3 @@
-{{ .Git.Signers -}}
+# Written by github.com/zadykian/ws, whose next run replaces any change made here.
+{{ with ssh_pub .User (print .Home "/.ssh/ws-sign.pub") }}me@zadykian.dev {{ . }}
+{{ end -}}
